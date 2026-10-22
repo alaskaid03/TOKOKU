@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("CUSTOMER")
+  avatar    String?
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+  cartItems CartItem[]
+  @@index([role])
+}
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+model Product {
+  id           String     @id @default(cuid())
+  name         String
+  slug         String     @unique
+  description  String
+  price        Int
+  comparePrice Int?
+  stock        Int        @default(0)
+  sku          String     @unique
+  weight       Int        @default(0)
+  images       String
+  isActive     Boolean    @default(true)
+  categoryId   String
+  category     Category   @relation(fields: [categoryId], references: [id])
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  stockLogs    StockLog[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  @@index([categoryId])
+  @@index([price])
+  @@index([stock])
+  @@index([createdAt])
+}
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([userId, productId])
+  @@index([userId])
+}
+model Order {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  subtotal        Int
+  discount        Int      @default(0)
+  shippingCost    Int      @default(0)
+  total           Int
+  status          String   @default("PENDING")
+  paymentStatus   String   @default("UNPAID")
+  paymentMethod   String?
+  shippingAddress String
+  notes           String?
+  items           OrderItem[]
+  payment         Payment?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int
+  subtotal  Int
+  @@index([orderId])
+}
+model Payment {
+  id            String    @id @default(cuid())
+  orderId       String    @unique
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount        Int
+  method        String
+  status        String    @default("UNPAID")
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+}
+model StockLog {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  change    Int
+  reason    String
+  createdAt DateTime @default(now())
+  @@index([productId])
+}
