@@ -1,10 +1,10 @@
 FROM node:20-alpine
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+COPY package*.json ./
+RUN npm ci --omit=dev || npm install --omit=dev
 COPY prisma ./prisma
 RUN npx prisma generate
 COPY src ./src
-COPY uploads ./uploads
+RUN mkdir -p uploads prisma/backups
 EXPOSE 3001
-CMD ["node","src/server.js"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss || true; node prisma/seed.js || true; node src/server.js"]

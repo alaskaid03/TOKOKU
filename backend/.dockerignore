@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+prisma/dev.db
+prisma/backups
+uploads/*
+!uploads/.gitkeep
+.git
